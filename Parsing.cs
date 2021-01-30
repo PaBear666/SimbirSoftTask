@@ -12,6 +12,9 @@ namespace SimbirSoftTask
 {
     class Parsing
     {
+        /// <summary>
+        /// Ссылка на файл с HTML
+        /// </summary>
         public string PathFileForSaveHTML
         {
             get => pathFileForSaveHTML;
@@ -27,6 +30,9 @@ namespace SimbirSoftTask
                 }
             }
         }
+        /// <summary>
+        /// Ссылка на файл с словами
+        /// </summary>
         public string PathFileForSaveWords
         {
             get => pathFileForSaveWords;
@@ -42,6 +48,9 @@ namespace SimbirSoftTask
                 }
             }
         }
+        /// <summary>
+        /// Ссылка на сайт
+        /// </summary>
         public string PathWebSite 
         {
             get => pathWebSite;
@@ -92,7 +101,7 @@ namespace SimbirSoftTask
             if (DownloadWebSite(out Exception e))
             {
                 string page = null;
-                // Считывает текстовый документ с HTML и передаем значение строки в page
+                
                 using (StreamReader sr = new StreamReader(PathFileForSaveHTML))
                 {
                     page = sr.ReadToEnd().ToLower();
@@ -101,18 +110,18 @@ namespace SimbirSoftTask
 
                 string bodypage = LeaveOnlyBodyTag(page);
 
-                // Создаем и записываем в текстовый документ слова 
+ 
                 using (var sw = new StreamWriter(PathFileForSaveWords, false))
                 {
-                    //Получаем список слов 
+
                     var words = Cutting(bodypage);
-                    // Добавляем слова с словарь слов
+
                     foreach (var word in words)
                     {
-                        AddWordAlphaBet(word);
+                        AddWordDictionary(word);
                     }
 
-                    //Выводим слова на консоль
+
                     foreach (var word in dictionary)
                     {
                         if (word.Value.Count != 0)
@@ -146,7 +155,11 @@ namespace SimbirSoftTask
             string bodypage = htmlpage.Substring(body.start, body.end - body.start);
             return bodypage;
         }
-        private void AddWordAlphaBet(string word) 
+        /// <summary>
+        /// Добавляет слова в словарь
+        /// </summary>
+        /// <param name="word">строка с словами</param>
+        private void AddWordDictionary(string word) 
         {
             var separation = word.Split(new char[] { ' ' });
             foreach(string newword in separation)
@@ -185,7 +198,7 @@ namespace SimbirSoftTask
             bool repeat = true;
             while (repeat)
             {
-                index = FindWords(bodypage,index.end);  // 1 1642 1666 слово или словосочитание
+                index = FindWords(bodypage,index.end);  
                 if (index.start != -1 && index.end != -1)
                 {
                     string str = bodypage.Substring(index.start, index.end - index.start);
@@ -241,7 +254,7 @@ namespace SimbirSoftTask
                         return(newstart, newend);
 
                     }
-                    //else if(index2 != -1 && index1 > index2 && russinalphabet.Contains(char.ToLower(bodypage[index2 + 1])))
+                  
                     else if (index2 != -1 && index1 > index2 && CheckGoNext(index2,bodypage))
                     {
                         newstart = index2 + 1;
@@ -280,38 +293,45 @@ namespace SimbirSoftTask
             
         }     
 
-        private bool CheckGoNext(int index,string bodytag) 
+        /// <summary>
+        /// Проверка на продолжение прохода строки со словаи
+        /// </summary>
+        /// <param name="index">Индекс с какого места начинаем проверку</param>
+        /// <param name="bodypage">строка с body тегом</param>
+        /// <returns></returns>
+        private bool CheckGoNext(int index,string bodypage) 
         {
-            char mainchar = char.ToLower(bodytag[index]);
+            char mainchar = char.ToLower(bodypage[index]);
             switch (mainchar) 
             {
                 case '>':
                     int newindex = index;
-                    while(bodytag.Length > newindex && bodytag[newindex] != '<')
+                    while(bodypage.Length > newindex && bodypage[newindex] != '<')
                     {
                         newindex++;
                     }
-                    if(bodytag.Length < newindex)
+                    if(bodypage.Length < newindex)
                     {
                         return false;
                     }
                     else
                     {
-                        while(newindex > index && !russinalphabet.Contains(bodytag[index + 1]))
+                        while(newindex > index && !russinalphabet.Contains(bodypage[index + 1]))
                         {
                             index++;
                         }
                         return newindex > index; 
                     }
-                //case '"':
-
-                //    break;
                 default:
                     return false;
-                    break;
             }
         }
 
+        /// <summary>
+        /// Очищает строку от лишних символов
+        /// </summary>
+        /// <param name="str">Строка с словами</param>
+        /// <returns>Очищенная строка</returns>
         private string CleanUpString(string str) 
         {
             List<string> words = new List<string>();
@@ -345,6 +365,11 @@ namespace SimbirSoftTask
                 return newstring;
         }
 
+        /// <summary>
+        /// Скачивает HTML веб-сервиса 
+        /// </summary>
+        /// <param name="e">Для определния исключений</param>
+        /// <returns>Прошло ли удачно скачивание .True-да,False-нет</returns>
         private bool DownloadWebSite(out Exception e)
         {
             WebClient wc = new WebClient();
