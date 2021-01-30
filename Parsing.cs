@@ -12,7 +12,6 @@ namespace SimbirSoftTask
 {
     class Parsing
     {
-        public string PathBodyPage { get => "BodyPage"; }
         public string PathFileForSaveHTML
         {
             get => pathFileForSaveHTML;
@@ -99,41 +98,34 @@ namespace SimbirSoftTask
                     page = sr.ReadToEnd().ToLower();
 
                 }
-                //Создаем и передает текстовму документу весь тег Body
-                using (StreamWriter sw = new StreamWriter(PathBodyPage, false))
-                {
-                    sw.Write(LeaveOnlyBodyTag(page));
-                }
-                //Считываем документ с тегом Body
-                using (var sr = new StreamReader(PathBodyPage))
-                {
-                    //Передаем значения тега Body в bodypage
-                    string bodypage = sr.ReadToEnd();
-                    // Создаем и записываем в текстовый документ слова 
-                    using (var sw = new StreamWriter(PathFileForSaveWords, false))
-                    {
-                        //Получаем список слов 
-                        var words = Cutting(bodypage);
-                        // Добавляем слова с словарь слов
-                        foreach (var word in words)
-                        {
-                            AddWordAlphaBet(word);
-                        }
 
-                        //Выводим слова на консоль
-                        foreach (var word in dictionary)
+                string bodypage = LeaveOnlyBodyTag(page);
+
+                // Создаем и записываем в текстовый документ слова 
+                using (var sw = new StreamWriter(PathFileForSaveWords, false))
+                {
+                    //Получаем список слов 
+                    var words = Cutting(bodypage);
+                    // Добавляем слова с словарь слов
+                    foreach (var word in words)
+                    {
+                        AddWordAlphaBet(word);
+                    }
+
+                    //Выводим слова на консоль
+                    foreach (var word in dictionary)
+                    {
+                        if (word.Value.Count != 0)
                         {
-                            if (word.Value.Count != 0)
+                            foreach (var item in word.Value)
                             {
-                                foreach (var item in word.Value)
-                                {
-                                    Console.WriteLine($"{item.word} - {item.count}");
-                                    sw.WriteLine($"{item.word} - {item.count}");
-                                }
+                                Console.WriteLine($"{item.word} - {item.count}");
+                                sw.WriteLine($"{item.word} - {item.count}");
                             }
                         }
                     }
                 }
+                
             }
             else
             {
