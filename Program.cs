@@ -27,8 +27,6 @@ namespace SimbirSoftTask
                     Console.WriteLine("Скачивание пошло!");
                     Parsing parsing = new Parsing(url,pathHTML,pathText);
                     parsing.StartParsing();
-                    Console.WriteLine("Все прошло успешно");
-                   
                     
                 }
                 catch (Exception e)
