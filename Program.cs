@@ -11,9 +11,6 @@ namespace SimbirSoftTask
             Console.WriteLine("Данная программа находит русские слова на странице и выводит их в консоль");
             Console.WriteLine("Для начала работы введите URL сайта");
             Console.WriteLine("Пример URL: https://www.simbirsoft.com");
-            bool repeat = true;
-            while (repeat)
-            {
                 Console.Write("URL: ");
                 string url = Console.ReadLine().ToLower();
                 Console.WriteLine();
@@ -31,20 +28,13 @@ namespace SimbirSoftTask
                     Parsing parsing = new Parsing(url,pathHTML,pathText);
                     parsing.StartParsing();
                     Console.WriteLine("Все прошло успешно");
-                    while (repeat)
-                    {
-                        Console.WriteLine("Повторить парсинг для сайта? Да или Нет");
-                        repeat = Console.ReadLine().ToLower() != "нет";
-                    }
+                   
                     
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e.Message);
                 }
-            }
-
-
         }
     }
 }
