@@ -1,11 +1,12 @@
 ﻿using System;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace SimbirSoftTask
 {
     class Program
     {
-        static void Main(string[] args)
+        static async Task Main()
         {
             Console.WriteLine("Добро пожаловать!");
             Console.WriteLine("Данная программа находит русские слова на странице и выводит их в консоль");
@@ -24,15 +25,19 @@ namespace SimbirSoftTask
                 string pathText = Console.ReadLine().ToLower();
                 try
                 {
-                    Console.WriteLine("Скачивание пошло!");
                     Parsing parsing = new Parsing(url,pathHTML,pathText);
-                    parsing.StartParsing();
-                    
+                    parsing.WriteWordsHandler += PrintWords;
+                    await parsing.StartParsingAsync();                  
+                  
                 }
                 catch (Exception e)
                 {
                     Console.WriteLine(e.Message);
                 }
+        }
+        static public void PrintWords(string words)
+        {
+            Console.WriteLine(words);
         }
     }
 }
