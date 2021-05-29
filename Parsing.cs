@@ -7,6 +7,8 @@ using System.Net;
 using System.Text.RegularExpressions;
 using System.Diagnostics;
 using System.Linq;
+using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace SimbirSoftTask
 {
@@ -31,7 +33,7 @@ namespace SimbirSoftTask
             }
         }
         /// <summary>
-        /// Ссылка на файл с словами
+        /// Ссылка на файл со словами
         /// </summary>
         public string PathFileForSaveWords
         {
@@ -96,31 +98,29 @@ namespace SimbirSoftTask
         /// Основной метод класса,парсит слова из текстового файла с HTML разметкой.Выводит слова на экран
         /// </summary>
         /// <param name="pathFile"></param>
-        public void StartParsing() 
+        public async Task StartParsingAsync() 
         {
-            if (DownloadWebSite(out Exception e))
-            {
+            if (!(await DowloadWebSiteAsync()))
+                throw new FileLoadException();
+
                 string page = null;
-                
                 using (StreamReader sr = new StreamReader(PathFileForSaveHTML))
                 {
-                    page = sr.ReadToEnd().ToLower();
-
+                    page = (await sr.ReadToEndAsync()).ToLower();
                 }
 
-                string bodypage = LeaveOnlyBodyTag(page);
+                string bodytage = await Task.Run(() => LeaveOnlyBodyTag(page));
 
- 
                 using (var sw = new StreamWriter(PathFileForSaveWords, false))
                 {
 
-                    var words = Cutting(bodypage);
-
+                var words = await CuttingAsync(bodytage);
+                await Task.Run(() =>
+                {
                     foreach (var word in words)
                     {
                         AddWordDictionary(word);
                     }
-
 
                     foreach (var word in dictionary)
                     {
@@ -133,15 +133,10 @@ namespace SimbirSoftTask
                             }
                         }
                     }
+                });
+                   
                 }
                 
-            }
-            else
-            {
-
-                Console.WriteLine("Что-то пошло не так");
-                Console.WriteLine(e.Message);
-            }
         }
 
         /// <summary>
@@ -155,6 +150,7 @@ namespace SimbirSoftTask
             string bodypage = htmlpage.Substring(body.start, body.end - body.start);
             return bodypage;
         }
+
         /// <summary>
         /// Добавляет слова в словарь
         /// </summary>
@@ -212,6 +208,30 @@ namespace SimbirSoftTask
             return words;
 
             
+        }
+        private async Task<List<string>> CuttingAsync(string bodypage)
+        {
+            List<string> words = new List<string>();
+            (int start, int end) index = (0, 0);
+            bool repeat = true;
+
+            await Task.Run(() =>
+            {
+                while (repeat)
+                {
+                    index = FindWords(bodypage, index.end);
+                    if (index.start != -1 && index.end != -1)
+                    {
+                        string str = bodypage.Substring(index.start, index.end - index.start);
+                        words.Add(WebUtility.UrlDecode(CleanUpString(str)));
+                    }
+                    else
+                    {
+                        repeat = false;
+                    }
+                }
+            });
+            return words;
         }
         /// <summary>
         /// Находит индексы открывания и закрывания тега body
@@ -371,19 +391,23 @@ namespace SimbirSoftTask
         /// <param name="e">Для определния исключений</param>
         /// <returns>Прошло ли удачно скачивание .True-да,False-нет</returns>
         private bool DownloadWebSite(out Exception e)
-        {
-            WebClient wc = new WebClient();
+        {           
             try
             {
-                Stream str = wc.OpenRead(PathWebSite);
-                StreamReader streamReader = new StreamReader(str, Encoding.Default);
-                using (StreamWriter sw = new StreamWriter(PathFileForSaveHTML, false))
+                using (WebClient wc = new WebClient())
                 {
-                    sw.WriteLine(WebUtility.HtmlDecode(streamReader.ReadToEnd()));
-                }
-                str.Close();
-                streamReader.Close();
 
+                    using (Stream str = wc.OpenRead(PathWebSite))
+                    {
+                        using (StreamReader streamReader = new StreamReader(str, Encoding.Default))
+                        {
+                            using (StreamWriter sw = new StreamWriter(PathFileForSaveHTML, false))
+                            {
+                                sw.WriteLine(WebUtility.HtmlDecode(streamReader.ReadToEnd()));
+                            }
+                        }
+                    }
+                }
             }
             catch(Exception exp) 
             {
@@ -393,7 +417,31 @@ namespace SimbirSoftTask
             e = null;
             return true;
         }
+        private async Task<bool> DowloadWebSiteAsync()
+        {
+            try
+            {
+                using (WebClient wc = new WebClient())
+                {
 
+                    using (Stream str = await wc.OpenReadTaskAsync(pathWebSite))
+                    {
+                        using (StreamReader streamReader = new StreamReader(str, Encoding.Default))
+                        {
+                            using (StreamWriter sw = new StreamWriter(PathFileForSaveHTML, false))
+                            {
+                                await sw.WriteLineAsync(WebUtility.HtmlDecode(streamReader.ReadToEnd()));
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                throw e;
+            }
+            return true;
+        }
 
         char[] russinalphabet;
         char[] englishalphabet;
