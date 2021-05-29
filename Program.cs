@@ -26,6 +26,7 @@ namespace SimbirSoftTask
                 try
                 {
                     Parsing parsing = new Parsing(url,pathHTML,pathText);
+                    parsing.WriteWordsHandler += PrintWords;
                     await parsing.StartParsingAsync();                  
                   
                 }
@@ -33,6 +34,10 @@ namespace SimbirSoftTask
                 {
                     Console.WriteLine(e.Message);
                 }
+        }
+        static public void PrintWords(string words)
+        {
+            Console.WriteLine(words);
         }
     }
 }

@@ -20,9 +20,9 @@ namespace SimbirSoftTask
         public string PathFileForSaveHTML
         {
             get => pathFileForSaveHTML;
-            set
+            private set
             {
-                if(Uri.IsWellFormedUriString(value, UriKind.Relative))
+                if (Uri.IsWellFormedUriString(value, UriKind.Relative))
                 {
                     pathFileForSaveHTML = value;
                 }
@@ -38,7 +38,7 @@ namespace SimbirSoftTask
         public string PathFileForSaveWords
         {
             get => pathFileForSaveWords;
-            set
+            private set
             {
                 if (Uri.IsWellFormedUriString(value, UriKind.Relative))
                 {
@@ -53,12 +53,12 @@ namespace SimbirSoftTask
         /// <summary>
         /// Ссылка на сайт
         /// </summary>
-        public string PathWebSite 
+        public string PathWebSite
         {
             get => pathWebSite;
-            set
+            private set
             {
-                if(Uri.IsWellFormedUriString(value,UriKind.Absolute))
+                if (Uri.IsWellFormedUriString(value, UriKind.Absolute))
                 {
                     pathWebSite = value;
                 }
@@ -69,6 +69,7 @@ namespace SimbirSoftTask
             }
         }
 
+        public event Action<string> WriteWordsHandler; 
 
         public Parsing(string pathfile,string pathForSaveHTML,string pathForSaveWords)
         {
@@ -103,40 +104,38 @@ namespace SimbirSoftTask
             if (!(await DowloadWebSiteAsync()))
                 throw new FileLoadException();
 
-                string page = null;
-                using (StreamReader sr = new StreamReader(PathFileForSaveHTML))
-                {
-                    page = (await sr.ReadToEndAsync()).ToLower();
-                }
+            string page = null;
+            using (StreamReader sr = new StreamReader(PathFileForSaveHTML))
+            {
+                page = (await sr.ReadToEndAsync()).ToLower();
+            }
 
-                string bodytage = await Task.Run(() => LeaveOnlyBodyTag(page));
+            string bodytage = await Task.Run(() => LeaveOnlyBodyTag(page));
 
-                using (var sw = new StreamWriter(PathFileForSaveWords, false))
-                {
-
+            using (var sw = new StreamWriter(PathFileForSaveWords, false))
+            {
                 var words = await CuttingAsync(bodytage);
-                await Task.Run(() =>
+                foreach (var word in words)
                 {
-                    foreach (var word in words)
-                    {
-                        AddWordDictionary(word);
-                    }
+                    AddWordDictionary(word);
+                };
+                WriteWordsHandler += sw.WriteLine;
+            }
+            PrintWords();
 
-                    foreach (var word in dictionary)
+        }
+        private void PrintWords()
+        {
+            foreach (var word in dictionary)
+            {
+                if (word.Value.Count != 0)
+                {
+                    foreach (var item in word.Value)
                     {
-                        if (word.Value.Count != 0)
-                        {
-                            foreach (var item in word.Value)
-                            {
-                                Console.WriteLine($"{item.word} - {item.count}");
-                                sw.WriteLine($"{item.word} - {item.count}");
-                            }
-                        }
+                        WriteWordsHandler?.Invoke($"{item.word} - {item.count}");
                     }
-                });
-                   
                 }
-                
+            }
         }
 
         /// <summary>
@@ -150,7 +149,6 @@ namespace SimbirSoftTask
             string bodypage = htmlpage.Substring(body.start, body.end - body.start);
             return bodypage;
         }
-
         /// <summary>
         /// Добавляет слова в словарь
         /// </summary>
